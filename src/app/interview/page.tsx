@@ -51,7 +51,7 @@ export default function InterviewPage() {
               max={10} 
               step={1} 
               value={[ratings[q] || 0]}
-              onValueChange={(val) => handleRate(q, val)}
+              onValueChange={(val) => handleRate(q, val as number[])}
               className="py-2"
             />
           </div>

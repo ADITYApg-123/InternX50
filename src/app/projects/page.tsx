@@ -1,7 +1,7 @@
 'use client';
 
 import { PageTransition } from '@/components/layout/PageTransition';
-import { Rocket, Github, CheckCircle2, Circle, MessageSquare } from 'lucide-react';
+import { Rocket, GitBranch, CheckCircle2, Circle, MessageSquare } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 
@@ -51,7 +51,7 @@ export default function ProjectsPage() {
                   <CardTitle className="text-2xl font-bold">{mainProject.name}</CardTitle>
                 </div>
                 <button className="h-8 w-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors">
-                  <Github className="h-4 w-4" />
+                  <GitBranch className="h-4 w-4" />
                 </button>
               </div>
               <div className="mt-4">
