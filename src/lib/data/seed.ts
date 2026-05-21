@@ -1,71 +1,132 @@
-import { DayPlan, Task, TaskCategory } from '../types';
+import { DayPlan, Task, TaskCategory, TopicMastery, TaskDifficulty } from '../types';
+
+export const dsaTopicsData = [
+  { id: 'dsa-arrays', name: 'Arrays & Hashing' },
+  { id: 'dsa-pointers', name: 'Two Pointers' },
+  { id: 'dsa-window', name: 'Sliding Window' },
+  { id: 'dsa-stack', name: 'Stack & Queue' },
+  { id: 'dsa-search', name: 'Binary Search' },
+  { id: 'dsa-ll', name: 'Linked List' },
+  { id: 'dsa-trees', name: 'Trees' },
+  { id: 'dsa-graphs', name: 'Graphs' },
+  { id: 'dsa-dp', name: 'Dynamic Programming' },
+];
+
+export const mlTopicsData = [
+  { id: 'ml-regression', name: 'Linear / Logistic Regression' },
+  { id: 'ml-trees', name: 'Decision Trees & Random Forest' },
+  { id: 'ml-boost', name: 'XGBoost & Gradient Boosting' },
+  { id: 'ml-svm', name: 'SVM & Kernels' },
+  { id: 'ml-metrics', name: 'Evaluation Metrics' },
+];
+
+export const dlTopicsData = [
+  { id: 'dl-basics', name: 'Neural Network Basics' },
+  { id: 'dl-cnn', name: 'CNN Architectures' },
+  { id: 'dl-rnn', name: 'RNNs & LSTMs' },
+  { id: 'dl-trans', name: 'Transformers & Attention' },
+  { id: 'dl-opt', name: 'Optimizers' },
+];
+
+export function generateInitialTopics(): Record<string, TopicMastery> {
+  const topics: Record<string, TopicMastery> = {};
+  
+  [...dsaTopicsData].forEach(t => {
+    topics[t.id] = { topicId: t.id, name: t.name, category: 'DSA', solvedCount: 0, totalQuestions: 30, confidenceScore: 0, lastRevisionDay: null, weakPatterns: [] };
+  });
+  
+  [...mlTopicsData, ...dlTopicsData].forEach(t => {
+    topics[t.id] = { topicId: t.id, name: t.name, category: 'ML/DL', solvedCount: 0, totalQuestions: 15, confidenceScore: 0, lastRevisionDay: null, weakPatterns: [] };
+  });
+
+  return topics;
+}
 
 function generateDailyTasks(day: number, phase: number): Task[] {
-  const dsaTopics = ['Arrays', 'Strings', 'Hashing', 'Two Pointers', 'Sliding Window', 'Stack', 'Queue', 'Linked List', 'Trees', 'Graphs', 'Binary Search', 'Dynamic Programming'];
-  const mlTopics = ['Regression', 'Classification', 'Decision Trees', 'Random Forest', 'XGBoost', 'SVM', 'Clustering', 'PCA', 'Metrics'];
-  const dlTopics = ['Neural Networks', 'Backprop', 'CNNs', 'RNNs', 'LSTMs', 'Transformers', 'Optimizers', 'BatchNorm & Dropout'];
-  
-  const dsaIndex = Math.floor((day - 1) / 4) % dsaTopics.length;
-  const mlIndex = Math.floor((day - 1) / 3) % mlTopics.length;
-  const dlIndex = Math.floor((day - 25) / 3) % dlTopics.length;
+  const dsaIndex = Math.floor((day - 1) / 4) % dsaTopicsData.length;
+  const mlIndex = Math.floor((day - 1) / 3) % mlTopicsData.length;
+  const dlIndex = Math.floor((day - 25) / 3) % dlTopicsData.length;
 
   const isDL = day > 25;
-  const coreTopic = isDL ? dlTopics[dlIndex] : mlTopics[mlIndex];
+  const coreTopic = isDL ? dlTopicsData[dlIndex] : mlTopicsData[mlIndex];
+  const dsaTopic = dsaTopicsData[dsaIndex];
 
   const tasks: Task[] = [
     {
-      id: `task-${day}-1`,
-      title: `DSA Practice: ${dsaTopics[dsaIndex]}`,
-      description: 'Solve 3-5 standard LeetCode problems (Medium/Hard). Focus on pattern recognition.',
+      id: `task-${day}-dsa`,
+      title: `DSA Practice: ${dsaTopic.name}`,
+      description: 'Solve 3-5 standard LeetCode problems. Focus on pattern recognition.',
       category: 'DSA',
       durationMinutes: 180,
-      completed: false,
+      difficulty: 'Medium',
+      priority: 1,
+      status: 'Pending',
+      topicId: dsaTopic.id,
+      confidenceImpact: 15,
+      failedCount: 0,
     },
     {
-      id: `task-${day}-2`,
+      id: `task-${day}-gate`,
       title: 'GATE Revision & Practice',
-      description: 'Cover fundamental topics in OS, DBMS, or CN. Practice previous year questions.',
+      description: 'Cover fundamental topics in OS, DBMS, or CN.',
       category: 'GATE',
       durationMinutes: 120,
-      completed: false,
+      difficulty: 'Medium',
+      priority: 3,
+      status: 'Pending',
+      failedCount: 0,
     },
     {
-      id: `task-${day}-3`,
-      title: `Core Concept: ${coreTopic}`,
-      description: 'Revise theory, mathematical intuition, and implement a quick script from scratch.',
+      id: `task-${day}-ml`,
+      title: `Core Concept: ${coreTopic.name}`,
+      description: 'Revise theory, mathematical intuition, and implement from scratch.',
       category: 'ML/DL',
       durationMinutes: 90,
-      completed: false,
+      difficulty: 'Medium',
+      priority: 2,
+      status: 'Pending',
+      topicId: coreTopic.id,
+      confidenceImpact: 20,
+      failedCount: 0,
     },
     {
-      id: `task-${day}-4`,
+      id: `task-${day}-comm`,
       title: 'Communication & Behavioral',
-      description: 'Practice answering 2 STAR format questions aloud. Record and review yourself.',
+      description: 'Practice answering 2 STAR format questions aloud.',
       category: 'Communication',
       durationMinutes: 30,
-      completed: false,
+      difficulty: 'Easy',
+      priority: 4,
+      status: 'Pending',
+      failedCount: 0,
     }
   ];
 
-  if (phase === 2 && day % 3 === 0) {
+  if (phase >= 2 && day % 3 === 0) {
     tasks.push({
-      id: `task-${day}-5`,
+      id: `task-${day}-proj`,
       title: 'Project Building Sprint',
       description: 'Work on your core ML/DL portfolio project. Commit code to GitHub.',
       category: 'Projects',
       durationMinutes: 120,
-      completed: false,
+      difficulty: 'Hard',
+      priority: 1,
+      status: 'Pending',
+      failedCount: 0,
     });
   }
 
   if (phase === 3 && day % 2 === 0) {
     tasks.push({
-      id: `task-${day}-6`,
+      id: `task-${day}-mock`,
       title: 'Mock Interview / OA Simulation',
-      description: 'Take a timed 90-minute OA simulation or conduct a mock interview with a peer.',
+      description: 'Take a timed 90-minute OA simulation.',
       category: 'OA/Mock',
       durationMinutes: 90,
-      completed: false,
+      difficulty: 'Hard',
+      priority: 1,
+      status: 'Pending',
+      failedCount: 0,
     });
   }
 

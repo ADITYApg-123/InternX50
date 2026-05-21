@@ -6,28 +6,34 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Code2, Target, Trophy, Flame } from 'lucide-react';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
-
-const dsaTopics = [
-  { name: 'Arrays & Hashing', progress: 85, solved: 24, total: 30, confidence: 90 },
-  { name: 'Two Pointers', progress: 70, solved: 14, total: 20, confidence: 75 },
-  { name: 'Sliding Window', progress: 60, solved: 9, total: 15, confidence: 60 },
-  { name: 'Stack & Queue', progress: 90, solved: 18, total: 20, confidence: 85 },
-  { name: 'Binary Search', progress: 50, solved: 10, total: 20, confidence: 50 },
-  { name: 'Linked List', progress: 80, solved: 16, total: 20, confidence: 80 },
-  { name: 'Trees', progress: 40, solved: 12, total: 30, confidence: 45 },
-  { name: 'Graphs', progress: 20, solved: 5, total: 25, confidence: 30 },
-  { name: 'Dynamic Programming', progress: 10, solved: 4, total: 40, confidence: 20 },
-];
+import { useStore } from '@/store/useStore';
+import { useEffect, useState } from 'react';
 
 export default function DSAPage() {
-  const totalSolved = dsaTopics.reduce((acc, curr) => acc + curr.solved, 0);
-  const totalQuestions = dsaTopics.reduce((acc, curr) => acc + curr.total, 0);
+  const { topicMastery } = useStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  const dsaTopics = Object.values(topicMastery).filter(t => t.category === 'DSA');
+
+  const totalSolved = dsaTopics.reduce((acc, curr) => acc + curr.solvedCount, 0);
+  const totalQuestions = dsaTopics.reduce((acc, curr) => acc + curr.totalQuestions, 0);
 
   const radarData = dsaTopics.map(t => ({
     subject: t.name,
-    A: t.confidence,
+    A: t.confidenceScore,
     fullMark: 100,
   }));
+
+  const currentFocus = dsaTopics.reduce((prev, current) => (prev.confidenceScore > current.confidenceScore) ? current : prev, dsaTopics[0]);
+  const weakestTopic = dsaTopics.reduce((prev, current) => (prev.confidenceScore < current.confidenceScore) ? current : prev, dsaTopics[0]);
+  
+  const avgConfidence = dsaTopics.length > 0 ? dsaTopics.reduce((acc, t) => acc + t.confidenceScore, 0) / dsaTopics.length : 0;
 
   return (
     <PageTransition>
@@ -55,9 +61,9 @@ export default function DSAPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold flex items-center gap-2">
-                <Target className="h-5 w-5 text-indigo-400" /> Trees
+                <Target className="h-5 w-5 text-indigo-400" /> {currentFocus?.name || 'None'}
               </div>
-              <p className="text-sm text-zinc-500 mt-1">45% Confidence</p>
+              <p className="text-sm text-zinc-500 mt-1">{currentFocus?.confidenceScore || 0}% Confidence</p>
             </CardContent>
           </Card>
 
@@ -67,7 +73,7 @@ export default function DSAPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold flex items-center gap-2">
-                <Flame className="h-5 w-5 text-red-400" /> Dynamic Prog.
+                <Flame className="h-5 w-5 text-red-400" /> {weakestTopic?.name || 'None'}
               </div>
               <p className="text-sm text-zinc-500 mt-1">Needs revision</p>
             </CardContent>
@@ -80,21 +86,24 @@ export default function DSAPage() {
               <Trophy className="h-5 w-5 text-yellow-500" /> Topic Mastery
             </h2>
             <div className="grid gap-3">
-              {dsaTopics.map(topic => (
-                <div key={topic.name} className="glass p-4 rounded-xl border border-white/5 space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">{topic.name}</span>
-                    <Badge variant="outline" className="border-white/10 bg-white/5">
-                      {topic.solved}/{topic.total} Solved
-                    </Badge>
+              {dsaTopics.map(topic => {
+                const progress = Math.min(100, Math.round((topic.solvedCount / topic.totalQuestions) * 100));
+                return (
+                  <div key={topic.topicId} className="glass p-4 rounded-xl border border-white/5 space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">{topic.name}</span>
+                      <Badge variant="outline" className="border-white/10 bg-white/5">
+                        {topic.solvedCount}/{topic.totalQuestions} Solved
+                      </Badge>
+                    </div>
+                    <Progress value={progress} className="h-2 bg-white/10" />
+                    <div className="flex justify-between text-xs text-zinc-400">
+                      <span>Confidence: {topic.confidenceScore}%</span>
+                      <span>Progress: {progress}%</span>
+                    </div>
                   </div>
-                  <Progress value={topic.progress} className="h-2 bg-white/10" />
-                  <div className="flex justify-between text-xs text-zinc-400">
-                    <span>Confidence: {topic.confidence}%</span>
-                    <span>Progress: {topic.progress}%</span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -113,11 +122,11 @@ export default function DSAPage() {
 
             <div className="glass p-6 rounded-xl border border-white/5 mt-6">
               <h3 className="font-bold mb-2">OA Readiness</h3>
-              <p className="text-sm text-zinc-400 mb-4">Based on your pattern completion, you are currently ready to clear online assessments for tier-2 companies. Master Trees and DP for tier-1.</p>
-              <Progress value={45} className="h-2 bg-white/10" />
+              <p className="text-sm text-zinc-400 mb-4">Based on your pattern completion, you are currently ready to clear online assessments for tier-2 companies.</p>
+              <Progress value={avgConfidence} className="h-2 bg-white/10" />
               <div className="flex justify-between text-xs mt-2 font-medium">
                 <span className="text-zinc-500">Tier-3 Ready</span>
-                <span className="text-orange-400">Tier-2 Ready (45%)</span>
+                <span className="text-orange-400">Overall: {Math.round(avgConfidence)}%</span>
                 <span className="text-zinc-600">Tier-1 Ready</span>
               </div>
             </div>

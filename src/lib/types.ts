@@ -1,4 +1,6 @@
 export type TaskCategory = 'DSA' | 'GATE' | 'ML/DL' | 'Projects' | 'Communication' | 'OA/Mock' | 'Fundamentals';
+export type TaskDifficulty = 'Easy' | 'Medium' | 'Hard';
+export type TaskStatus = 'Pending' | 'Completed' | 'Skipped' | 'Failed';
 
 export interface Task {
   id: string;
@@ -6,7 +8,13 @@ export interface Task {
   description: string;
   category: TaskCategory;
   durationMinutes: number;
-  completed: boolean;
+  difficulty: TaskDifficulty;
+  priority: number; // 1 (Highest) to 5 (Lowest)
+  status: TaskStatus;
+  topicId?: string; // Links to TopicMastery
+  confidenceImpact?: number; // How much it affects the topic confidence (+ or -)
+  failedCount: number;
+  isRevision?: boolean;
 }
 
 export interface DayPlan {
@@ -14,14 +22,50 @@ export interface DayPlan {
   title: string;
   phase: number;
   tasks: Task[];
+  date?: string; // Keep track of physical dates if needed
 }
 
-export interface Roadmap {
-  days: DayPlan[];
+export interface TopicMastery {
+  topicId: string;
+  name: string;
+  category: TaskCategory;
+  solvedCount: number;
+  totalQuestions: number;
+  confidenceScore: number; // 0 to 100
+  lastRevisionDay: number | null;
+  weakPatterns: string[];
+}
+
+export interface ReflectionLog {
+  dayNumber: number;
+  date: string;
+  energyLevel: 'High' | 'Medium' | 'Low' | 'Burnout';
+  blockers: string;
+  revisionNeeds: string;
+  notes: string;
+}
+
+export interface MockInterview {
+  id: string;
+  date: string;
+  companyOrType: string;
+  confidenceRating: number; // 0 to 10
+  passed: boolean;
+  feedback: string;
+}
+
+export interface AnalyticsData {
+  studyHoursByDay: Record<number, number>; // dayNumber -> hours
+  readinessHistory: Record<number, number>; // dayNumber -> score
 }
 
 export interface UserStats {
   currentDay: number;
   streak: number;
   readinessScore: number;
+  lastActiveDate: string | null;
+}
+
+export interface Roadmap {
+  days: DayPlan[];
 }

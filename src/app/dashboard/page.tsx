@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 
 export default function DashboardPage() {
-  const { roadmap, stats, toggleTaskCompletion, setCurrentDay } = useStore();
+  const { roadmap, stats, triggerDailyCron } = useStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -22,7 +22,7 @@ export default function DashboardPage() {
   const currentDayPlan = roadmap.find(d => d.dayNumber === stats.currentDay);
   const remainingDays = 50 - stats.currentDay;
   
-  const completedToday = currentDayPlan?.tasks.filter(t => t.completed).length || 0;
+  const completedToday = currentDayPlan?.tasks.filter(t => t.status === 'Completed').length || 0;
   const totalToday = currentDayPlan?.tasks.length || 1;
   const progressPercent = Math.round((completedToday / totalToday) * 100);
 
@@ -106,22 +106,24 @@ export default function DashboardPage() {
             </div>
             
             <div className="grid gap-3">
-              {currentDayPlan?.tasks.map(task => (
+              {currentDayPlan?.tasks.map(task => {
+                const isCompleted = task.status === 'Completed';
+                return (
                 <div 
                   key={task.id}
                   className={cn(
                     "glass p-4 rounded-xl border flex items-start gap-4 transition-all duration-300",
-                    task.completed ? "border-emerald-500/30 bg-emerald-500/5" : "border-white/5 hover:border-white/20"
+                    isCompleted ? "border-emerald-500/30 bg-emerald-500/5" : "border-white/5 hover:border-white/20"
                   )}
                 >
                   <Checkbox 
-                    checked={task.completed}
-                    onCheckedChange={() => toggleTaskCompletion(stats.currentDay, task.id)}
-                    className={cn("mt-1 w-5 h-5 rounded border-white/20", task.completed && "data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500")}
+                    checked={isCompleted}
+                    onCheckedChange={() => useStore.getState().completeTask(stats.currentDay, task.id)}
+                    className={cn("mt-1 w-5 h-5 rounded border-white/20", isCompleted && "data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500")}
                   />
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center justify-between">
-                      <p className={cn("font-medium", task.completed && "line-through text-zinc-500")}>
+                      <p className={cn("font-medium", isCompleted && "line-through text-zinc-500")}>
                         {task.title}
                       </p>
                       <span className={cn("text-xs px-2 py-0.5 rounded-md border", getCategoryColor(task.category))}>
@@ -134,20 +136,20 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
 
             <div className="pt-4 flex justify-between">
               <button 
                 disabled={stats.currentDay === 1}
-                onClick={() => setCurrentDay(stats.currentDay - 1)}
+                onClick={() => triggerDailyCron(stats.currentDay - 1)}
                 className="text-sm text-zinc-400 hover:text-white transition-colors disabled:opacity-50"
               >
                 ← Previous Day
               </button>
               <button 
                 disabled={stats.currentDay === 50}
-                onClick={() => setCurrentDay(stats.currentDay + 1)}
+                onClick={() => triggerDailyCron(stats.currentDay + 1)}
                 className="text-sm text-zinc-400 hover:text-white transition-colors disabled:opacity-50"
               >
                 Next Day →

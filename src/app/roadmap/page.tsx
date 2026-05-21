@@ -10,7 +10,7 @@ import { DayPlan } from '@/lib/types';
 
 function DayCard({ day }: { day: DayPlan }) {
   const [isOpen, setIsOpen] = useState(false);
-  const completedCount = day.tasks.filter(t => t.completed).length;
+  const completedCount = day.tasks.filter(t => t.status === 'Completed').length;
   const isAllCompleted = completedCount === day.tasks.length;
 
   return (
@@ -51,7 +51,7 @@ function DayCard({ day }: { day: DayPlan }) {
                 <div key={task.id} className="flex gap-4 p-3 rounded-lg bg-black/40 border border-white/5">
                   <div className="flex-1">
                     <div className="flex justify-between items-start">
-                      <p className={cn("text-sm font-medium", task.completed ? "text-zinc-500 line-through" : "text-white")}>
+                      <p className={cn("text-sm font-medium", task.status === 'Completed' ? "text-zinc-500 line-through" : "text-white")}>
                         {task.title}
                       </p>
                       <span className="text-[10px] px-2 py-0.5 rounded border border-white/10 bg-white/5 text-zinc-400">
