@@ -10,6 +10,8 @@ interface AppState {
   analytics: AnalyticsData;
   reflections: ReflectionLog[];
   mockInterviews: MockInterview[];
+  interviewNotes: Record<string, { rating: number, notes: string }>;
+  projectDrafts: Record<string, string>;
   
   // Actions
   completeTask: (dayNumber: number, taskId: string) => void;
@@ -17,6 +19,9 @@ interface AppState {
   addReflection: (log: ReflectionLog) => void;
   addMockInterview: (mock: MockInterview) => void;
   recalculateReadiness: () => void;
+  updateTopicMastery: (topicId: string, updates: Partial<TopicMastery>) => void;
+  updateInterviewNote: (question: string, rating: number, notes: string) => void;
+  updateProjectDraft: (project: string, draft: string) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -36,6 +41,8 @@ export const useStore = create<AppState>()(
       },
       reflections: [],
       mockInterviews: [],
+      interviewNotes: {},
+      projectDrafts: {},
 
       recalculateReadiness: () => set((state) => {
         // Readiness Algorithm
@@ -80,18 +87,20 @@ export const useStore = create<AppState>()(
         let foundTopicId: string | undefined;
         let impact = 0;
         let durationMins = 0;
+        let wasCompleted = false;
 
-        // 1. Mark task as completed
+        // 1. Mark task as completed (toggle)
         const newRoadmap = state.roadmap.map(day => {
           if (day.dayNumber === dayNumber) {
             return {
               ...day,
               tasks: day.tasks.map(task => {
                 if (task.id === taskId) {
+                  wasCompleted = task.status === 'Completed';
                   foundTopicId = task.topicId;
                   impact = task.confidenceImpact || 0;
                   durationMins = task.durationMinutes;
-                  return { ...task, status: (task.status === 'Completed' ? 'Pending' : 'Completed') as 'Pending' | 'Completed' | 'Failed' | 'Skipped' };
+                  return { ...task, status: (wasCompleted ? 'Pending' : 'Completed') as 'Pending' | 'Completed' | 'Failed' | 'Skipped' };
                 }
                 return task;
               })
@@ -100,24 +109,58 @@ export const useStore = create<AppState>()(
           return day;
         });
 
-        // 2. Update Topic Mastery
+        // 2. Update Topic Mastery (increment on complete, decrement on un-complete)
         const newTopicMastery = { ...state.topicMastery };
         if (foundTopicId && newTopicMastery[foundTopicId]) {
           const t = newTopicMastery[foundTopicId];
-          newTopicMastery[foundTopicId] = {
-            ...t,
-            solvedCount: t.solvedCount + 3,
-            confidenceScore: Math.min(100, t.confidenceScore + impact),
-            lastRevisionDay: state.stats.currentDay,
-          };
+          if (!wasCompleted) {
+            newTopicMastery[foundTopicId] = {
+              ...t,
+              solvedCount: Math.min(t.totalQuestions, t.solvedCount + 1),
+              confidenceScore: Math.min(100, t.confidenceScore + impact),
+              lastRevisionDay: state.stats.currentDay,
+            };
+          } else {
+            newTopicMastery[foundTopicId] = {
+              ...t,
+              solvedCount: Math.max(0, t.solvedCount - 1),
+              confidenceScore: Math.max(0, t.confidenceScore - impact),
+            };
+          }
         }
 
-        // 3. Update Analytics (Hours)
+        // 3. Update Analytics (Hours) — add on complete, subtract on un-complete
         const newAnalytics = { ...state.analytics };
         const hours = durationMins / 60;
-        newAnalytics.studyHoursByDay[state.stats.currentDay] = (newAnalytics.studyHoursByDay[state.stats.currentDay] || 0) + hours;
+        if (!wasCompleted) {
+          newAnalytics.studyHoursByDay[state.stats.currentDay] = (newAnalytics.studyHoursByDay[state.stats.currentDay] || 0) + hours;
+        } else {
+          newAnalytics.studyHoursByDay[state.stats.currentDay] = Math.max(0, (newAnalytics.studyHoursByDay[state.stats.currentDay] || 0) - hours);
+        }
 
-        set({ roadmap: newRoadmap, topicMastery: newTopicMastery, analytics: newAnalytics });
+        // 4. Update Streak — track consecutive active days
+        const today = new Date().toISOString().split('T')[0];
+        const lastActive = state.stats.lastActiveDate;
+        let newStreak = state.stats.streak;
+        if (!wasCompleted) {
+          if (lastActive === today) {
+            // Already active today, streak stays
+          } else if (lastActive) {
+            const lastDate = new Date(lastActive);
+            const todayDate = new Date(today);
+            const diffDays = Math.floor((todayDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+            newStreak = diffDays === 1 ? newStreak + 1 : 1;
+          } else {
+            newStreak = 1;
+          }
+        }
+
+        set({ 
+          roadmap: newRoadmap, 
+          topicMastery: newTopicMastery, 
+          analytics: newAnalytics,
+          stats: { ...state.stats, streak: newStreak, lastActiveDate: !wasCompleted ? today : state.stats.lastActiveDate }
+        });
         get().recalculateReadiness();
       },
 
@@ -189,6 +232,25 @@ export const useStore = create<AppState>()(
         const newMocks = [...state.mockInterviews, mock];
         return { mockInterviews: newMocks };
       }),
+      updateTopicMastery: (topicId, updates) => set((state) => {
+        const newTopicMastery = { ...state.topicMastery };
+        if (newTopicMastery[topicId]) {
+          newTopicMastery[topicId] = { ...newTopicMastery[topicId], ...updates };
+        }
+        return { topicMastery: newTopicMastery };
+      }),
+      updateInterviewNote: (question, rating, notes) => set((state) => ({
+        interviewNotes: {
+          ...state.interviewNotes,
+          [question]: { rating, notes }
+        }
+      })),
+      updateProjectDraft: (project, draft) => set((state) => ({
+        projectDrafts: {
+          ...state.projectDrafts,
+          [project]: draft
+        }
+      })),
 
     }),
     {

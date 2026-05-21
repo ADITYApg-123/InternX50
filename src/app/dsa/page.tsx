@@ -4,13 +4,104 @@ import { PageTransition } from '@/components/layout/PageTransition';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Code2, Target, Trophy, Flame } from 'lucide-react';
+import { Code2, Target, Trophy, Flame, ChevronDown, Save } from 'lucide-react';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { useStore } from '@/store/useStore';
 import { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Slider } from '@/components/ui/slider';
+import { TopicMastery } from '@/lib/types';
+
+function TopicCard({ topic, onUpdate }: { topic: TopicMastery, onUpdate: (id: string, updates: Partial<TopicMastery>) => void }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [editSolved, setEditSolved] = useState(topic.solvedCount);
+  const [editConfidence, setEditConfidence] = useState(topic.confidenceScore);
+
+  const progress = Math.min(100, Math.round((topic.solvedCount / topic.totalQuestions) * 100));
+
+  const handleSave = () => {
+    onUpdate(topic.topicId, { solvedCount: editSolved, confidenceScore: editConfidence });
+    setIsExpanded(false);
+  };
+
+  return (
+    <div className="glass rounded-xl border border-white/5 overflow-hidden transition-all duration-300">
+      <div 
+        className="p-4 cursor-pointer hover:bg-white/5 transition-colors"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className="flex justify-between items-center mb-3">
+          <div className="flex items-center gap-2">
+            <span className="font-medium">{topic.name}</span>
+            <motion.div animate={{ rotate: isExpanded ? 180 : 0 }}>
+              <ChevronDown className="h-4 w-4 text-zinc-500" />
+            </motion.div>
+          </div>
+          <Badge variant="outline" className="border-white/10 bg-white/5">
+            {topic.solvedCount}/{topic.totalQuestions} Solved
+          </Badge>
+        </div>
+        <Progress value={progress} className="h-2 bg-white/10" />
+        <div className="flex justify-between text-xs text-zinc-400 mt-2">
+          <span>Confidence: {topic.confidenceScore}%</span>
+          <span>Progress: {progress}%</span>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="border-t border-white/5 bg-black/40"
+          >
+            <div className="p-4 space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs text-zinc-400 flex justify-between">
+                  <span>Solved Problems</span>
+                  <span>{editSolved} / {topic.totalQuestions}</span>
+                </label>
+                <input 
+                  type="number" 
+                  min="0"
+                  max={topic.totalQuestions}
+                  value={editSolved}
+                  onChange={(e) => setEditSolved(Number(e.target.value))}
+                  className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-orange-500 transition-colors"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-xs text-zinc-400 flex justify-between">
+                  <span>Confidence Score</span>
+                  <span>{editConfidence}%</span>
+                </label>
+                <Slider 
+                  max={100} 
+                  step={5} 
+                  value={[editConfidence]}
+                  onValueChange={(val) => setEditConfidence((val as number[])[0])}
+                  className="py-2"
+                />
+              </div>
+
+              <button 
+                onClick={handleSave}
+                className="w-full py-2 rounded-lg bg-orange-500/10 text-orange-400 font-medium border border-orange-500/30 hover:bg-orange-500/20 transition-colors flex items-center justify-center gap-2 text-sm"
+              >
+                <Save className="h-4 w-4" /> Save Mastery
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 export default function DSAPage() {
-  const { topicMastery } = useStore();
+  const { topicMastery, updateTopicMastery, recalculateReadiness } = useStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -30,10 +121,19 @@ export default function DSAPage() {
     fullMark: 100,
   }));
 
-  const currentFocus = dsaTopics.reduce((prev, current) => (prev.confidenceScore > current.confidenceScore) ? current : prev, dsaTopics[0]);
-  const weakestTopic = dsaTopics.reduce((prev, current) => (prev.confidenceScore < current.confidenceScore) ? current : prev, dsaTopics[0]);
+  // Fix: currentFocus should find the topic with the lowest confidence (needs most work)
+  const currentFocus = dsaTopics.reduce((prev, current) => (prev.confidenceScore < current.confidenceScore) ? prev : current, dsaTopics[0]);
+  // Fix: weakestTopic should be the absolute lowest, or maybe "Strongest Topic" instead? Wait, the UI says "Weakest Pattern", so both were logically the same.
+  // Let's make one "Strongest Pattern" and one "Needs Focus"
+  const strongestTopic = dsaTopics.reduce((prev, current) => (prev.confidenceScore > current.confidenceScore) ? prev : current, dsaTopics[0]);
+  const weakestTopic = dsaTopics.reduce((prev, current) => (prev.confidenceScore < current.confidenceScore) ? prev : current, dsaTopics[0]);
   
   const avgConfidence = dsaTopics.length > 0 ? dsaTopics.reduce((acc, t) => acc + t.confidenceScore, 0) / dsaTopics.length : 0;
+
+  const handleUpdateTopic = (id: string, updates: Partial<TopicMastery>) => {
+    updateTopicMastery(id, updates);
+    recalculateReadiness();
+  };
 
   return (
     <PageTransition>
@@ -57,13 +157,13 @@ export default function DSAPage() {
           
           <Card className="glass border-white/5">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-zinc-400">Current Focus</CardTitle>
+              <CardTitle className="text-sm font-medium text-zinc-400">Strongest Pattern</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold flex items-center gap-2">
-                <Target className="h-5 w-5 text-indigo-400" /> {currentFocus?.name || 'None'}
+                <Target className="h-5 w-5 text-indigo-400" /> {strongestTopic?.name || 'None'}
               </div>
-              <p className="text-sm text-zinc-500 mt-1">{currentFocus?.confidenceScore || 0}% Confidence</p>
+              <p className="text-sm text-zinc-500 mt-1">{strongestTopic?.confidenceScore || 0}% Confidence</p>
             </CardContent>
           </Card>
 
@@ -75,7 +175,7 @@ export default function DSAPage() {
               <div className="text-2xl font-bold flex items-center gap-2">
                 <Flame className="h-5 w-5 text-red-400" /> {weakestTopic?.name || 'None'}
               </div>
-              <p className="text-sm text-zinc-500 mt-1">Needs revision</p>
+              <p className="text-sm text-zinc-500 mt-1">{weakestTopic?.confidenceScore || 0}% Confidence</p>
             </CardContent>
           </Card>
         </div>
@@ -86,24 +186,9 @@ export default function DSAPage() {
               <Trophy className="h-5 w-5 text-yellow-500" /> Topic Mastery
             </h2>
             <div className="grid gap-3">
-              {dsaTopics.map(topic => {
-                const progress = Math.min(100, Math.round((topic.solvedCount / topic.totalQuestions) * 100));
-                return (
-                  <div key={topic.topicId} className="glass p-4 rounded-xl border border-white/5 space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium">{topic.name}</span>
-                      <Badge variant="outline" className="border-white/10 bg-white/5">
-                        {topic.solvedCount}/{topic.totalQuestions} Solved
-                      </Badge>
-                    </div>
-                    <Progress value={progress} className="h-2 bg-white/10" />
-                    <div className="flex justify-between text-xs text-zinc-400">
-                      <span>Confidence: {topic.confidenceScore}%</span>
-                      <span>Progress: {progress}%</span>
-                    </div>
-                  </div>
-                );
-              })}
+              {dsaTopics.map(topic => (
+                <TopicCard key={topic.topicId} topic={topic} onUpdate={handleUpdateTopic} />
+              ))}
             </div>
           </div>
 

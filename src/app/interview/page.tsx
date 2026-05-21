@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
 import { useStore } from '@/store/useStore';
 import { MockInterview } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const questions = {
   hr: [
@@ -30,10 +31,69 @@ const questions = {
   ]
 };
 
+// Extracted component to manage individual question state locally and debounce saving to the store
+function QuestionCard({ q, initialRating, initialNotes, onSave }: { q: string, initialRating: number, initialNotes: string, onSave: (rating: number, notes: string) => void }) {
+  const [rating, setRating] = useState(initialRating);
+  const [notes, setNotes] = useState(initialNotes);
+  const [isSaved, setIsSaved] = useState(false);
+
+  // Auto-save effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onSave(rating, notes);
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 2000);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [rating, notes, onSave]);
+
+  return (
+    <div className="glass p-5 rounded-xl border border-white/5 space-y-4 transition-all duration-300 hover:border-white/10 relative">
+      <AnimatePresence>
+        {isSaved && (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            exit={{ opacity: 0 }}
+            className="absolute top-4 right-4 text-[10px] text-emerald-400 font-medium"
+          >
+            Saved ✓
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <h3 className="font-medium text-lg pr-12">{q}</h3>
+      
+      <div className="space-y-2">
+        <div className="flex justify-between text-xs text-zinc-400">
+          <span>Needs Work</span>
+          <span>Confidence: {rating}/10</span>
+          <span>Perfect Delivery</span>
+        </div>
+        <Slider 
+          max={10} 
+          step={1} 
+          value={[rating]}
+          onValueChange={(val) => setRating((val as number[])[0])}
+          className="py-2"
+        />
+      </div>
+      
+      <div className="pt-2">
+        <textarea 
+          className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-sm resize-none focus:outline-none focus:border-pink-500 transition-colors"
+          placeholder="Draft your bullet points here..."
+          rows={3}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function InterviewPage() {
-  const { mockInterviews, addMockInterview, recalculateReadiness } = useStore();
+  const { mockInterviews, addMockInterview, recalculateReadiness, interviewNotes, updateInterviewNote } = useStore();
   const [mounted, setMounted] = useState(false);
-  const [ratings, setRatings] = useState<Record<string, number>>({});
   
   // New Mock Form
   const [mockType, setMockType] = useState('Google Mock OA');
@@ -46,11 +106,9 @@ export default function InterviewPage() {
 
   if (!mounted) return null;
 
-  const handleRate = (q: string, value: number[]) => {
-    setRatings(prev => ({ ...prev, [q]: value[0] }));
-  };
-
   const handleSaveMock = () => {
+    if (!mockType.trim()) return;
+    
     const newMock: MockInterview = {
       id: Date.now().toString(),
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
@@ -61,6 +119,11 @@ export default function InterviewPage() {
     };
     addMockInterview(newMock);
     recalculateReadiness();
+    
+    // Reset defaults for next mock
+    setMockType('');
+    setMockConfidence(5);
+    setMockPassed(true);
   };
 
   const avgConfidence = mockInterviews.length > 0 
@@ -70,33 +133,13 @@ export default function InterviewPage() {
   const renderQuestions = (qs: string[]) => (
     <div className="space-y-4 mt-6">
       {qs.map((q, i) => (
-        <div key={i} className="glass p-5 rounded-xl border border-white/5 space-y-4">
-          <h3 className="font-medium text-lg">{q}</h3>
-          
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs text-zinc-400">
-              <span>Needs Work</span>
-              <span>Confidence: {ratings[q] || 0}/10</span>
-              <span>Perfect Delivery</span>
-            </div>
-            <Slider 
-              defaultValue={[0]} 
-              max={10} 
-              step={1} 
-              value={[ratings[q] || 0]}
-              onValueChange={(val) => handleRate(q, val as number[])}
-              className="py-2"
-            />
-          </div>
-          
-          <div className="pt-2">
-            <textarea 
-              className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-sm resize-none focus:outline-none focus:border-pink-500 transition-colors"
-              placeholder="Draft your bullet points here..."
-              rows={3}
-            />
-          </div>
-        </div>
+        <QuestionCard 
+          key={i} 
+          q={q} 
+          initialRating={interviewNotes[q]?.rating || 0}
+          initialNotes={interviewNotes[q]?.notes || ''}
+          onSave={(r, n) => updateInterviewNote(q, r, n)}
+        />
       ))}
     </div>
   );
@@ -169,6 +212,7 @@ export default function InterviewPage() {
                   type="text" 
                   value={mockType}
                   onChange={(e) => setMockType(e.target.value)}
+                  placeholder="e.g. Meta Phone Screen"
                   className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-sm focus:outline-none focus:border-pink-500"
                 />
               </div>
@@ -207,7 +251,8 @@ export default function InterviewPage() {
 
               <button 
                 onClick={handleSaveMock}
-                className="w-full py-2 rounded-lg bg-pink-500/10 text-pink-400 font-bold border border-pink-500/30 hover:bg-pink-500/20 transition-colors flex items-center justify-center gap-2"
+                disabled={!mockType.trim()}
+                className="w-full py-2 rounded-lg bg-pink-500/10 text-pink-400 font-bold border border-pink-500/30 hover:bg-pink-500/20 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <Plus className="h-4 w-4" /> Save Log
               </button>
