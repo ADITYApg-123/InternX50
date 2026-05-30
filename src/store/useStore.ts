@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { DayPlan, UserStats, TopicMastery, AnalyticsData, ReflectionLog, MockInterview, Task } from '../lib/types';
+import { DayPlan, UserStats, TopicMastery, AnalyticsData, ReflectionLog, MockInterview, Task, CustomTask, BacklogItem } from '../lib/types';
 import { generateRoadmap, generateInitialTopics } from '../lib/data/seed';
 
 interface AppState {
@@ -12,6 +12,8 @@ interface AppState {
   mockInterviews: MockInterview[];
   interviewNotes: Record<string, { rating: number, notes: string }>;
   projectDrafts: Record<string, string>;
+  customTasks: Record<string, CustomTask[]>;
+  backlogItems: BacklogItem[];
   
   // Actions
   completeTask: (dayNumber: number, taskId: string) => void;
@@ -22,6 +24,16 @@ interface AppState {
   updateTopicMastery: (topicId: string, updates: Partial<TopicMastery>) => void;
   updateInterviewNote: (question: string, rating: number, notes: string) => void;
   updateProjectDraft: (project: string, draft: string) => void;
+  
+  // Custom Task Actions
+  addCustomTask: (date: string, text: string) => void;
+  toggleCustomTask: (date: string, taskId: string) => void;
+  deleteCustomTask: (date: string, taskId: string) => void;
+
+  // Backlog Actions
+  addBacklogItem: (item: Omit<BacklogItem, 'id' | 'createdAt'>) => void;
+  updateBacklogItem: (id: string, updates: Partial<BacklogItem>) => void;
+  deleteBacklogItem: (id: string) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -33,6 +45,7 @@ export const useStore = create<AppState>()(
         streak: 0,
         readinessScore: 0,
         lastActiveDate: null,
+        missionStartDate: new Date().toISOString().split('T')[0],
       },
       topicMastery: generateInitialTopics(),
       analytics: {
@@ -43,6 +56,8 @@ export const useStore = create<AppState>()(
       mockInterviews: [],
       interviewNotes: {},
       projectDrafts: {},
+      customTasks: {},
+      backlogItems: [],
 
       recalculateReadiness: () => set((state) => {
         // Readiness Algorithm
@@ -251,6 +266,74 @@ export const useStore = create<AppState>()(
           [project]: draft
         }
       })),
+
+      addCustomTask: (date, text) => set((state) => {
+        const newTask: CustomTask = {
+          id: `ct-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          text,
+          completed: false,
+          date,
+          createdAt: Date.now(),
+        };
+        const existingTasks = state.customTasks[date] || [];
+        return {
+          customTasks: {
+            ...state.customTasks,
+            [date]: [...existingTasks, newTask],
+          }
+        };
+      }),
+
+      toggleCustomTask: (date, taskId) => set((state) => {
+        const tasks = state.customTasks[date] || [];
+        const updatedTasks = tasks.map(t => 
+          t.id === taskId ? { ...t, completed: !t.completed } : t
+        );
+        return {
+          customTasks: {
+            ...state.customTasks,
+            [date]: updatedTasks,
+          }
+        };
+      }),
+
+      deleteCustomTask: (date, taskId) => set((state) => {
+        const tasks = state.customTasks[date] || [];
+        const updatedTasks = tasks.filter(t => t.id !== taskId);
+        return {
+          customTasks: {
+            ...state.customTasks,
+            [date]: updatedTasks,
+          }
+        };
+      }),
+
+      addBacklogItem: (item) => set((state) => {
+        const newItem: BacklogItem = {
+          ...item,
+          id: `bl-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          createdAt: Date.now(),
+        };
+        return {
+          backlogItems: [...state.backlogItems, newItem],
+        };
+      }),
+
+      updateBacklogItem: (id, updates) => set((state) => {
+        const updatedItems = state.backlogItems.map(item => 
+          item.id === id ? { ...item, ...updates } : item
+        );
+        return {
+          backlogItems: updatedItems,
+        };
+      }),
+
+      deleteBacklogItem: (id) => set((state) => {
+        const updatedItems = state.backlogItems.filter(item => item.id !== id);
+        return {
+          backlogItems: updatedItems,
+        };
+      }),
 
     }),
     {

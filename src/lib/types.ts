@@ -64,8 +64,29 @@ export interface UserStats {
   streak: number;
   readinessScore: number;
   lastActiveDate: string | null;
+  missionStartDate: string | null;
 }
 
 export interface Roadmap {
   days: DayPlan[];
+}
+
+export interface CustomTask {
+  id: string;
+  text: string;
+  completed: boolean;
+  date: string; // YYYY-MM-DD
+  createdAt: number;
+}
+
+export type BacklogItemType = 'Work' | 'Target' | 'Project';
+export type BacklogItemStatus = 'Todo' | 'In Progress' | 'Done';
+
+export interface BacklogItem {
+  id: string;
+  title: string;
+  description?: string;
+  type: BacklogItemType;
+  status: BacklogItemStatus;
+  createdAt: number;
 }

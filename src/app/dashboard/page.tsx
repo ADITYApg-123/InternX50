@@ -6,6 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock, CheckCircle2, PlayCircle, Lock } from 'lucide-react';
+import { DashboardCalendar } from '@/components/ui/DashboardCalendar';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 
@@ -157,8 +158,11 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="space-y-4">
-            <h2 className="text-xl font-bold">Upcoming Milestones</h2>
+          <div className="space-y-8">
+            <DashboardCalendar />
+            
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold">Upcoming Milestones</h2>
             <div className="glass rounded-xl border border-white/5 p-4 space-y-4">
               <div className="flex gap-4 opacity-50">
                 <div className="h-8 w-8 rounded-full bg-white/5 flex items-center justify-center shrink-0">
@@ -179,6 +183,7 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
+          </div>
           </div>
         </div>
       </div>

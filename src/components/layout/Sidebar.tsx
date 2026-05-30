@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Map, Code2, BrainCircuit, Rocket, Mic, Activity, LineChart, BookText } from 'lucide-react';
+import { LayoutDashboard, Map, Code2, BrainCircuit, Rocket, Mic, Activity, LineChart, BookText, CalendarDays, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -14,6 +14,8 @@ const navItems = [
   { name: 'Interview Center', href: '/interview', icon: Mic },
   { name: 'OA Simulation', href: '/oa', icon: Activity },
   { name: 'Daily Reflection', href: '/reflection', icon: BookText },
+  { name: 'Daily Planner', href: '/schedule', icon: CalendarDays },
+  { name: 'Targets & Backlog', href: '/backlog', icon: Target },
   { name: 'Analytics', href: '/analytics', icon: LineChart },
 ];
 
