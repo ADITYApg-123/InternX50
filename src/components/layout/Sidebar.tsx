@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Map, Code2, BrainCircuit, Rocket, Mic, Activity, LineChart, BookText, CalendarDays, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { DataManager } from '@/components/ui/DataManager';
 
 const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -57,8 +58,9 @@ export function Sidebar() {
         })}
       </nav>
       
-      <div className="mt-auto px-2 pb-4">
-        <div className="rounded-lg bg-indigo-500/10 border border-indigo-500/20 p-4">
+      <div className="mt-auto px-2 pb-4 flex flex-col gap-2">
+        <DataManager />
+        <div className="rounded-lg bg-indigo-500/10 border border-indigo-500/20 p-4 mt-2">
           <p className="text-xs font-semibold text-indigo-300 mb-1">50 Days Mission</p>
           <p className="text-[10px] text-zinc-400">Consistency is the only metric that matters.</p>
         </div>
