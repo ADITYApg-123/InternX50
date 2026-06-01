@@ -20,6 +20,13 @@ export interface DailyHabit {
   title: string;
 }
 
+export interface LongTermGoal {
+  id: string;
+  title: string;
+  completed: boolean;
+  createdAt: number;
+}
+
 interface AppState {
   roadmap: DayPlan[];
   stats: UserStats;
@@ -65,6 +72,12 @@ interface AppState {
   dailyHabits: DailyHabit[];
   addDailyHabit: (title: string) => void;
   deleteDailyHabit: (id: string) => void;
+
+  // Long Term Goals
+  longTermGoals: LongTermGoal[];
+  addLongTermGoal: (title: string) => void;
+  toggleLongTermGoal: (id: string) => void;
+  deleteLongTermGoal: (id: string) => void;
 }
 
 const initialAiModules: AiModule[] = [
@@ -415,6 +428,17 @@ export const useStore = create<AppState>()(
       })),
       deleteDailyHabit: (id) => set((state) => ({
         dailyHabits: state.dailyHabits.filter(h => h.id !== id)
+      })),
+
+      longTermGoals: [],
+      addLongTermGoal: (title) => set((state) => ({
+        longTermGoals: [...state.longTermGoals, { id: `ltg-${Date.now()}`, title, completed: false, createdAt: Date.now() }]
+      })),
+      toggleLongTermGoal: (id) => set((state) => ({
+        longTermGoals: state.longTermGoals.map(g => g.id === id ? { ...g, completed: !g.completed } : g)
+      })),
+      deleteLongTermGoal: (id) => set((state) => ({
+        longTermGoals: state.longTermGoals.filter(g => g.id !== id)
       })),
 
     }),

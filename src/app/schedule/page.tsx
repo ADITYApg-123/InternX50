@@ -10,8 +10,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 export default function SchedulePage() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [newTaskText, setNewTaskText] = useState('');
+  const [newGoalText, setNewGoalText] = useState('');
   
-  const { customTasks, addCustomTask, toggleCustomTask, deleteCustomTask, roadmap, stats, completeTask } = useStore();
+  const { 
+    customTasks, addCustomTask, toggleCustomTask, deleteCustomTask, 
+    roadmap, stats, completeTask,
+    longTermGoals, addLongTermGoal, toggleLongTermGoal, deleteLongTermGoal
+  } = useStore();
 
   const dateString = useMemo(() => {
     return selectedDate.toISOString().split('T')[0];
@@ -60,6 +65,13 @@ export default function SchedulePage() {
     setNewTaskText('');
   };
 
+  const handleAddGoal = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newGoalText.trim()) return;
+    addLongTermGoal(newGoalText.trim());
+    setNewGoalText('');
+  };
+
   const getCategoryColor = (category: string) => {
     switch (category) {
       case 'DSA': return 'text-orange-400 bg-orange-400/10 border-orange-400/20';
@@ -74,14 +86,16 @@ export default function SchedulePage() {
 
   return (
     <PageTransition>
-      <div className="space-y-8 max-w-4xl mx-auto pb-20">
+      <div className="space-y-8 max-w-6xl mx-auto pb-20">
         <div>
           <h1 className="text-3xl font-bold tracking-tight mb-2">Daily Planner</h1>
           <p className="text-zinc-400">Schedule your upcoming tasks and manage your everyday routine.</p>
         </div>
 
-        {/* Date Selector */}
-        <div className="glass rounded-2xl p-4 flex items-center justify-between">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-8">
+            {/* Date Selector */}
+            <div className="glass rounded-2xl p-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button 
               onClick={handlePrevDay}
@@ -242,6 +256,67 @@ export default function SchedulePage() {
               )}
             </div>
           )}
+          </div>
+        </div>
+
+        {/* Right Column: Long Term Goals */}
+        <div className="lg:col-span-1 space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold tracking-tight">Long Term Goals</h2>
+            </div>
+            
+            <div className="glass rounded-2xl border border-white/5 p-5 space-y-6">
+              <p className="text-sm text-zinc-400">Keep track of your monthly or yearly milestones.</p>
+              
+              <div className="space-y-3">
+                {longTermGoals.map(goal => (
+                  <div 
+                    key={goal.id} 
+                    className={cn(
+                      "group flex items-start gap-3 p-3 rounded-xl transition-all border",
+                      goal.completed ? "bg-white/5 border-white/5 opacity-60" : "bg-black/20 border-white/10 hover:border-indigo-500/30"
+                    )}
+                  >
+                    <button 
+                      onClick={() => toggleLongTermGoal(goal.id)}
+                      className="mt-0.5 flex-shrink-0 text-zinc-400 hover:text-indigo-400 transition-colors"
+                    >
+                      {goal.completed ? <CheckCircle2 className="w-5 h-5 text-emerald-500" /> : <Circle className="w-5 h-5" />}
+                    </button>
+                    <span className={cn(
+                      "flex-1 text-sm transition-all",
+                      goal.completed && "line-through text-zinc-500"
+                    )}>
+                      {goal.title}
+                    </span>
+                    <button 
+                      onClick={() => deleteLongTermGoal(goal.id)}
+                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-red-500/10 text-zinc-500 hover:text-red-400 transition-all shrink-0"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <form onSubmit={handleAddGoal} className="flex gap-2">
+                <input
+                  type="text"
+                  value={newGoalText}
+                  onChange={(e) => setNewGoalText(e.target.value)}
+                  placeholder="E.g., Complete GATE syllabus"
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-500/50 text-white placeholder:text-zinc-600"
+                />
+                <button 
+                  type="submit"
+                  disabled={!newGoalText.trim()}
+                  className="bg-white/10 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed p-2.5 rounded-xl transition-colors flex items-center justify-center shrink-0"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </form>
+            </div>
+          </div>
         </div>
       </div>
     </PageTransition>
