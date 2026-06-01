@@ -10,12 +10,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 export default function ProjectsPage() {
-  const { roadmap, stats, projectDrafts, updateProjectDraft } = useStore();
+  const { roadmap, projectDrafts, updateProjectDraft } = useStore();
   const [mounted, setMounted] = useState(false);
   const [activeDraft, setActiveDraft] = useState<string | null>(null);
   const [draftContent, setDraftContent] = useState('');
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 

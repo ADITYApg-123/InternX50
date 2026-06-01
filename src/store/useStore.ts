@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { DayPlan, UserStats, TopicMastery, AnalyticsData, ReflectionLog, MockInterview, Task, CustomTask, BacklogItem } from '../lib/types';
+import { DayPlan, UserStats, TopicMastery, AnalyticsData, ReflectionLog, MockInterview, CustomTask, BacklogItem } from '../lib/types';
 import { generateRoadmap, generateInitialTopics } from '../lib/data/seed';
 
 export interface AiSubtopic {
@@ -166,7 +166,7 @@ export const useStore = create<AppState>()(
         });
         const projScore = projTotal > 0 ? (projCompleted / projTotal) * 100 : 0;
 
-        let mockSum = 0; let mockCount = state.mockInterviews.length;
+        let mockSum = 0; const mockCount = state.mockInterviews.length;
         state.mockInterviews.forEach(m => { mockSum += m.confidenceRating * 10; }); // scale to 100
         const mockScore = mockCount > 0 ? mockSum / mockCount : 0;
 

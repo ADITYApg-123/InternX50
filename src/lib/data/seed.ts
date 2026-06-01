@@ -1,4 +1,4 @@
-import { DayPlan, Task, TaskCategory, TopicMastery, TaskDifficulty } from '../types';
+import { DayPlan, Task, TopicMastery } from '../types';
 
 export const dsaTopicsData = [
   { id: 'dsa-arrays', name: 'Arrays & Hashing' },

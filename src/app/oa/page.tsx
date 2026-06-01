@@ -25,6 +25,7 @@ export default function OASimulationPage() {
   const [timeSpent, setTimeSpent] = useState(90);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
@@ -33,6 +34,7 @@ export default function OASimulationPage() {
     if (isActive && timeLeft > 0) {
       interval = setInterval(() => setTimeLeft(t => t - 1), 1000);
     } else if (timeLeft === 0 && isActive) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsActive(false);
     }
     return () => clearInterval(interval);

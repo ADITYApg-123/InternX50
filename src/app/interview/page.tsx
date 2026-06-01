@@ -101,6 +101,7 @@ export default function InterviewPage() {
   const [mockPassed, setMockPassed] = useState(true);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
