@@ -5,13 +5,13 @@ import { useStore } from '@/store/useStore';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Clock, CheckCircle2, PlayCircle, Lock } from 'lucide-react';
+import { Clock, CheckCircle2, PlayCircle, Lock, Trash2, Plus } from 'lucide-react';
 import { DashboardCalendar } from '@/components/ui/DashboardCalendar';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 
 export default function DashboardPage() {
-  const { roadmap, stats, setCurrentDay } = useStore();
+  const { roadmap, stats, setCurrentDay, dailyHabits, addDailyHabit, deleteDailyHabit } = useStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -161,6 +161,47 @@ export default function DashboardPage() {
           <div className="space-y-8">
             <DashboardCalendar />
             
+            {/* Daily Habits / Minimums */}
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold">Daily Minimums</h2>
+              <div className="glass rounded-xl border border-white/5 p-4 space-y-4">
+                <p className="text-sm text-zinc-400">These will automatically populate as tasks for each new day.</p>
+                
+                {dailyHabits.length > 0 && (
+                  <div className="space-y-2">
+                    {dailyHabits.map(habit => (
+                      <div key={habit.id} className="flex items-center justify-between group p-2 hover:bg-white/5 rounded-lg transition-colors">
+                        <span className="text-sm text-zinc-300">{habit.title}</span>
+                        <button 
+                          onClick={() => deleteDailyHabit(habit.id)}
+                          className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-red-500/10 text-zinc-500 hover:text-red-400 transition-all shrink-0 ml-2"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                <form 
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const input = e.currentTarget.elements.namedItem('habit') as HTMLInputElement;
+                    if (input.value.trim()) {
+                      addDailyHabit(input.value.trim());
+                      input.value = '';
+                    }
+                  }} 
+                  className="flex gap-2"
+                >
+                  <input name="habit" type="text" placeholder="Add daily minimum..." className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-white/30" />
+                  <button type="submit" className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </form>
+              </div>
+            </div>
+
             <div className="space-y-4">
               <h2 className="text-xl font-bold">Upcoming Milestones</h2>
             <div className="glass rounded-xl border border-white/5 p-4 space-y-4">

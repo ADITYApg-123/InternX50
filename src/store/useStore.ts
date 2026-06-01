@@ -15,6 +15,11 @@ export interface AiModule {
   subtopics: AiSubtopic[];
 }
 
+export interface DailyHabit {
+  id: string;
+  title: string;
+}
+
 interface AppState {
   roadmap: DayPlan[];
   stats: UserStats;
@@ -29,7 +34,6 @@ interface AppState {
   
   // Actions
   completeTask: (dayNumber: number, taskId: string) => void;
-  triggerDailyCron: (newDay: number) => void;
   addReflection: (log: ReflectionLog) => void;
   addMockInterview: (mock: MockInterview) => void;
   recalculateReadiness: () => void;
@@ -56,6 +60,11 @@ interface AppState {
   addAiSubtopic: (moduleId: string, title: string) => void;
   deleteAiModule: (id: string) => void;
   deleteAiSubtopic: (moduleId: string, subtopicId: string) => void;
+
+  // Daily Habits
+  dailyHabits: DailyHabit[];
+  addDailyHabit: (title: string) => void;
+  deleteDailyHabit: (id: string) => void;
 }
 
 const initialAiModules: AiModule[] = [
@@ -242,69 +251,6 @@ export const useStore = create<AppState>()(
         get().recalculateReadiness();
       },
 
-      triggerDailyCron: (newDay) => set((state) => {
-        if (newDay <= state.stats.currentDay) return state;
-
-        const newTopicMastery = { ...state.topicMastery };
-        const newRoadmap = [...state.roadmap];
-        const dayPlanIndex = newRoadmap.findIndex(d => d.dayNumber === newDay);
-        
-        if (dayPlanIndex === -1) return state;
-
-        // 1. Revision Engine
-        Object.values(newTopicMastery).forEach(topic => {
-          if (topic.lastRevisionDay !== null && (newDay - topic.lastRevisionDay) >= 7) {
-            // Decay confidence
-            newTopicMastery[topic.topicId].confidenceScore = Math.max(0, topic.confidenceScore - 15);
-            
-            // Add revision task if low confidence
-            if (newTopicMastery[topic.topicId].confidenceScore < 40) {
-              const revTask: Task = {
-                id: `rev-${newDay}-${topic.topicId}`,
-                title: `Revision Needed: ${topic.name}`,
-                description: `Confidence dropped. Spend 30 mins revisiting ${topic.name}.`,
-                category: topic.category,
-                durationMinutes: 30,
-                difficulty: 'Easy',
-                priority: 1,
-                status: 'Pending',
-                topicId: topic.topicId,
-                confidenceImpact: 20,
-                failedCount: 0,
-                isRevision: true,
-              };
-              newRoadmap[dayPlanIndex].tasks.push(revTask);
-            }
-          }
-        });
-
-        // 2. Fall-Behind Recovery
-        const prevDay = state.stats.currentDay;
-        const prevDayPlan = newRoadmap.find(d => d.dayNumber === prevDay);
-        
-        let currentDayMinutes = newRoadmap[dayPlanIndex].tasks.reduce((acc, t) => acc + t.durationMinutes, 0);
-
-        if (prevDayPlan) {
-          prevDayPlan.tasks.forEach(task => {
-            if (task.status === 'Pending' && task.priority <= 2) { // Only carry over high priority
-              if (currentDayMinutes + task.durationMinutes <= 360) { // Max 6 hours limit
-                newRoadmap[dayPlanIndex].tasks.push({ ...task, id: `${task.id}-carried` });
-                currentDayMinutes += task.durationMinutes;
-                task.status = 'Skipped'; // mark as skipped on the old day
-              } else {
-                task.status = 'Failed'; // failed if it can't carry over
-              }
-            }
-          });
-        }
-
-        return {
-          stats: { ...state.stats, currentDay: newDay },
-          topicMastery: newTopicMastery,
-          roadmap: newRoadmap,
-        };
-      }),
-
       addReflection: (log) => set((state) => ({ reflections: [...state.reflections, log] })),
       addMockInterview: (mock) => set((state) => {
         const newMocks = [...state.mockInterviews, mock];
@@ -399,10 +345,37 @@ export const useStore = create<AppState>()(
       }),
 
       setCurrentDay: (dayNumber) => set((state) => {
-        if (dayNumber >= 1 && dayNumber <= 50) {
-          return { stats: { ...state.stats, currentDay: dayNumber } };
+        if (dayNumber < 1 || dayNumber > 50) return state;
+
+        const newRoadmap = [...state.roadmap];
+        const dayPlanIndex = newRoadmap.findIndex(d => d.dayNumber === dayNumber);
+        
+        if (dayPlanIndex !== -1) {
+          const dayTasks = newRoadmap[dayPlanIndex].tasks;
+          // Check if habits were already injected
+          const hasHabits = dayTasks.some(t => t.id.startsWith('habit-'));
+          
+          if (!hasHabits && state.dailyHabits.length > 0) {
+            state.dailyHabits.forEach(habit => {
+              newRoadmap[dayPlanIndex].tasks.push({
+                id: `habit-${dayNumber}-${habit.id}-${Date.now()}`,
+                title: habit.title,
+                description: 'Daily Minimum',
+                category: 'Chore',
+                durationMinutes: 15,
+                difficulty: 'Easy',
+                priority: 1,
+                status: 'Pending',
+                failedCount: 0
+              });
+            });
+          }
         }
-        return state;
+
+        return { 
+          stats: { ...state.stats, currentDay: dayNumber },
+          roadmap: newRoadmap
+        };
       }),
 
       aiModules: initialAiModules,
@@ -434,6 +407,14 @@ export const useStore = create<AppState>()(
           ...mod,
           subtopics: mod.subtopics.filter(sub => sub.id !== subtopicId)
         } : mod)
+      })),
+
+      dailyHabits: [],
+      addDailyHabit: (title) => set((state) => ({
+        dailyHabits: [...state.dailyHabits, { id: `habit-${Date.now()}`, title }]
+      })),
+      deleteDailyHabit: (id) => set((state) => ({
+        dailyHabits: state.dailyHabits.filter(h => h.id !== id)
       })),
 
     }),
