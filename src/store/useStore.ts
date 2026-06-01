@@ -34,6 +34,8 @@ interface AppState {
   addBacklogItem: (item: Omit<BacklogItem, 'id' | 'createdAt'>) => void;
   updateBacklogItem: (id: string, updates: Partial<BacklogItem>) => void;
   deleteBacklogItem: (id: string) => void;
+
+  setCurrentDay: (dayNumber: number) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -333,6 +335,13 @@ export const useStore = create<AppState>()(
         return {
           backlogItems: updatedItems,
         };
+      }),
+
+      setCurrentDay: (dayNumber) => set((state) => {
+        if (dayNumber >= 1 && dayNumber <= 50) {
+          return { stats: { ...state.stats, currentDay: dayNumber } };
+        }
+        return state;
       }),
 
     }),

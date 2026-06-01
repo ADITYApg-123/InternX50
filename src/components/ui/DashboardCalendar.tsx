@@ -104,14 +104,27 @@ export function DashboardCalendar() {
             const isToday = normCellDate.getTime() === today.getTime();
             const indicator = getDayIndicator(cell.date);
             
+            const diffTime = normCellDate.getTime() - normalizedMissionStart.getTime();
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            const missionDayNumber = diffDays + 1;
+            const isMissionDay = diffDays >= 0 && diffDays < 50;
+            const isCurrentDay = stats.currentDay === missionDayNumber;
+            
             return (
-              <div 
+              <button 
                 key={i} 
+                disabled={!isMissionDay}
+                onClick={() => {
+                  if (isMissionDay) {
+                    useStore.getState().setCurrentDay(missionDayNumber);
+                  }
+                }}
                 className={cn(
                   "aspect-square flex flex-col items-center justify-center rounded-lg relative text-sm",
                   !cell.isCurrentMonth && "opacity-30",
                   isToday && "bg-white/10 font-bold",
-                  "hover:bg-white/5 transition-colors"
+                  isCurrentDay && "ring-2 ring-indigo-500 bg-indigo-500/10",
+                  isMissionDay ? "hover:bg-white/10 cursor-pointer transition-all" : "cursor-default"
                 )}
               >
                 <span>{cell.date.getDate()}</span>
@@ -124,7 +137,7 @@ export function DashboardCalendar() {
                     "bg-zinc-600"
                   )} />
                 )}
-              </div>
+              </button>
             );
           })}
         </div>

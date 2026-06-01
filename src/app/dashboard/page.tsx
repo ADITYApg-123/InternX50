@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 
 export default function DashboardPage() {
-  const { roadmap, stats, triggerDailyCron } = useStore();
+  const { roadmap, stats, setCurrentDay } = useStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -143,14 +143,14 @@ export default function DashboardPage() {
             <div className="pt-4 flex justify-between">
               <button 
                 disabled={stats.currentDay === 1}
-                onClick={() => triggerDailyCron(stats.currentDay - 1)}
+                onClick={() => setCurrentDay(stats.currentDay - 1)}
                 className="text-sm text-zinc-400 hover:text-white transition-colors disabled:opacity-50"
               >
                 ← Previous Day
               </button>
               <button 
                 disabled={stats.currentDay === 50}
-                onClick={() => triggerDailyCron(stats.currentDay + 1)}
+                onClick={() => setCurrentDay(stats.currentDay + 1)}
                 className="text-sm text-zinc-400 hover:text-white transition-colors disabled:opacity-50"
               >
                 Next Day →
