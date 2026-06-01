@@ -11,6 +11,7 @@ export interface AiSubtopic {
 
 export interface AiModule {
   id: string;
+  domainId: string;
   title: string;
   subtopics: AiSubtopic[];
 }
@@ -63,7 +64,7 @@ interface AppState {
   // AI Curriculum
   aiModules: AiModule[];
   toggleAiSubtopic: (moduleId: string, subtopicId: string) => void;
-  addAiModule: (title: string) => void;
+  addAiModule: (domainId: string, title: string) => void;
   addAiSubtopic: (moduleId: string, title: string) => void;
   deleteAiModule: (id: string) => void;
   deleteAiSubtopic: (moduleId: string, subtopicId: string) => void;
@@ -81,42 +82,81 @@ interface AppState {
 }
 
 const initialAiModules: AiModule[] = [
+  // Deep Learning Domain
   {
-    id: 'mod-ml',
-    title: 'Machine Learning (ML)',
+    id: 'mod-ann',
+    domainId: 'dl',
+    title: 'Artificial Neural Networks (ANN)',
+    subtopics: [
+      { id: 'sub-ann-1', title: 'Customer Churn Prediction (ANN Classification)', completed: false },
+      { id: 'sub-ann-2', title: 'Handwritten Digit Classification (MNIST)', completed: false },
+      { id: 'sub-ann-3', title: 'Graduate Admission Prediction (Regression)', completed: false },
+      { id: 'sub-ann-4', title: 'Vanishing & Exploding Gradients Debugging', completed: false },
+      { id: 'sub-ann-5', title: 'Implementing Dropout Layers', completed: false },
+      { id: 'sub-ann-6', title: 'Batch Normalization', completed: false },
+      { id: 'sub-ann-7', title: 'Hyperparameter Tuning with Keras Tuner', completed: false },
+      { id: 'sub-ann-8', title: 'Keras Functional Model API', completed: false }
+    ]
+  },
+  {
+    id: 'mod-cnn',
+    domainId: 'dl',
+    title: 'Convolutional Neural Networks (CNN)',
+    subtopics: [
+      { id: 'sub-cnn-1', title: 'Cat Vs Dog Image Classification Project', completed: false },
+      { id: 'sub-cnn-2', title: 'Implementing Pretrained CNN Models (ImageNet)', completed: false },
+      { id: 'sub-cnn-3', title: 'Transfer Learning & Fine Tuning', completed: false }
+    ]
+  },
+  {
+    id: 'mod-rnn',
+    domainId: 'dl',
+    title: 'Recurrent Neural Networks (RNN & LSTM)',
+    subtopics: [
+      { id: 'sub-rnn-1', title: 'RNN Implementation for Sentiment Analysis', completed: false },
+      { id: 'sub-rnn-2', title: 'Building a Next Word Predictor (LSTM)', completed: false }
+    ]
+  },
+  {
+    id: 'mod-transformers',
+    domainId: 'dl',
+    title: 'Transformers & Attention',
+    subtopics: [
+      { id: 'sub-trans-1', title: 'Programming Self Attention Mechanisms', completed: false }
+    ]
+  },
+  
+  // Machine Learning Domain
+  {
+    id: 'mod-ml-basics',
+    domainId: 'ml',
+    title: 'Supervised Learning',
     subtopics: [
       { id: 'sub-ml-1', title: 'Linear & Logistic Regression', completed: false },
       { id: 'sub-ml-2', title: 'Decision Trees & Random Forests', completed: false },
-      { id: 'sub-ml-3', title: 'SVM & Kernels', completed: false },
-      { id: 'sub-ml-4', title: 'K-Means Clustering', completed: false }
+      { id: 'sub-ml-3', title: 'SVM & Kernels', completed: false }
     ]
   },
+  
+  // Generative AI Domain
   {
-    id: 'mod-dl',
-    title: 'Deep Learning (DL)',
+    id: 'mod-genai-llm',
+    domainId: 'genai',
+    title: 'Large Language Models',
     subtopics: [
-      { id: 'sub-dl-1', title: 'Artificial Neural Networks (ANN)', completed: false },
-      { id: 'sub-dl-2', title: 'Convolutional Neural Networks (CNN)', completed: false },
-      { id: 'sub-dl-3', title: 'Recurrent Neural Networks (RNN & LSTM)', completed: false },
-      { id: 'sub-dl-4', title: 'Transformers & Attention Mechanics', completed: false }
+      { id: 'sub-genai-1', title: 'LLM Architectures', completed: false },
+      { id: 'sub-genai-2', title: 'Retrieval-Augmented Generation (RAG)', completed: false }
     ]
   },
+  
+  // Agentic AI Domain
   {
-    id: 'mod-genai',
-    title: 'Generative AI',
-    subtopics: [
-      { id: 'sub-genai-1', title: 'Large Language Models (LLMs) Architecture', completed: false },
-      { id: 'sub-genai-2', title: 'Retrieval-Augmented Generation (RAG)', completed: false },
-      { id: 'sub-genai-3', title: 'Prompt Engineering Techniques', completed: false }
-    ]
-  },
-  {
-    id: 'mod-agentic',
-    title: 'Agentic AI',
+    id: 'mod-agentic-react',
+    domainId: 'agentic',
+    title: 'Agent Frameworks',
     subtopics: [
       { id: 'sub-agent-1', title: 'ReAct Prompting & Planning', completed: false },
-      { id: 'sub-agent-2', title: 'Tool Calling & Function Execution', completed: false },
-      { id: 'sub-agent-3', title: 'Multi-Agent Frameworks', completed: false }
+      { id: 'sub-agent-2', title: 'Tool Calling & Function Execution', completed: false }
     ]
   }
 ];
@@ -400,8 +440,8 @@ export const useStore = create<AppState>()(
         } : mod)
       })),
 
-      addAiModule: (title) => set((state) => ({
-        aiModules: [...state.aiModules, { id: `mod-${Date.now()}`, title, subtopics: [] }]
+      addAiModule: (domainId, title) => set((state) => ({
+        aiModules: [...state.aiModules, { id: `mod-${Date.now()}`, domainId, title, subtopics: [] }]
       })),
 
       addAiSubtopic: (moduleId, title) => set((state) => ({
