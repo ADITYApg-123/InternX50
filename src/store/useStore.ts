@@ -82,41 +82,41 @@ interface AppState {
 
 const initialAiModules: AiModule[] = [
   {
-    id: 'mod-ann',
-    title: 'Artificial Neural Networks (ANN)',
+    id: 'mod-ml',
+    title: 'Machine Learning (ML)',
     subtopics: [
-      { id: 'sub-ann-1', title: 'Customer Churn Prediction (ANN Classification)', completed: false },
-      { id: 'sub-ann-2', title: 'Handwritten Digit Classification (MNIST)', completed: false },
-      { id: 'sub-ann-3', title: 'Graduate Admission Prediction (Regression)', completed: false },
-      { id: 'sub-ann-4', title: 'Vanishing & Exploding Gradients Debugging', completed: false },
-      { id: 'sub-ann-5', title: 'Implementing Dropout Layers', completed: false },
-      { id: 'sub-ann-6', title: 'Batch Normalization', completed: false },
-      { id: 'sub-ann-7', title: 'Hyperparameter Tuning with Keras Tuner', completed: false },
-      { id: 'sub-ann-8', title: 'Keras Functional Model API', completed: false }
+      { id: 'sub-ml-1', title: 'Linear & Logistic Regression', completed: false },
+      { id: 'sub-ml-2', title: 'Decision Trees & Random Forests', completed: false },
+      { id: 'sub-ml-3', title: 'SVM & Kernels', completed: false },
+      { id: 'sub-ml-4', title: 'K-Means Clustering', completed: false }
     ]
   },
   {
-    id: 'mod-cnn',
-    title: 'Convolutional Neural Networks (CNN)',
+    id: 'mod-dl',
+    title: 'Deep Learning (DL)',
     subtopics: [
-      { id: 'sub-cnn-1', title: 'Cat Vs Dog Image Classification Project', completed: false },
-      { id: 'sub-cnn-2', title: 'Implementing Pretrained CNN Models (ImageNet)', completed: false },
-      { id: 'sub-cnn-3', title: 'Transfer Learning & Fine Tuning', completed: false }
+      { id: 'sub-dl-1', title: 'Artificial Neural Networks (ANN)', completed: false },
+      { id: 'sub-dl-2', title: 'Convolutional Neural Networks (CNN)', completed: false },
+      { id: 'sub-dl-3', title: 'Recurrent Neural Networks (RNN & LSTM)', completed: false },
+      { id: 'sub-dl-4', title: 'Transformers & Attention Mechanics', completed: false }
     ]
   },
   {
-    id: 'mod-rnn',
-    title: 'Recurrent Neural Networks (RNN & LSTM)',
+    id: 'mod-genai',
+    title: 'Generative AI',
     subtopics: [
-      { id: 'sub-rnn-1', title: 'RNN Implementation for Sentiment Analysis', completed: false },
-      { id: 'sub-rnn-2', title: 'Building a Next Word Predictor (LSTM)', completed: false }
+      { id: 'sub-genai-1', title: 'Large Language Models (LLMs) Architecture', completed: false },
+      { id: 'sub-genai-2', title: 'Retrieval-Augmented Generation (RAG)', completed: false },
+      { id: 'sub-genai-3', title: 'Prompt Engineering Techniques', completed: false }
     ]
   },
   {
-    id: 'mod-transformers',
-    title: 'Transformers & Attention',
+    id: 'mod-agentic',
+    title: 'Agentic AI',
     subtopics: [
-      { id: 'sub-trans-1', title: 'Programming Self Attention Mechanisms', completed: false }
+      { id: 'sub-agent-1', title: 'ReAct Prompting & Planning', completed: false },
+      { id: 'sub-agent-2', title: 'Tool Calling & Function Execution', completed: false },
+      { id: 'sub-agent-3', title: 'Multi-Agent Frameworks', completed: false }
     ]
   }
 ];
