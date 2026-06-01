@@ -170,7 +170,7 @@ export const useStore = create<AppState>()(
         streak: 0,
         readinessScore: 0,
         lastActiveDate: null,
-        missionStartDate: new Date().toISOString().split('T')[0],
+        missionStartDate: '2026-06-02',
       },
       topicMastery: generateInitialTopics(),
       analytics: {
@@ -483,7 +483,7 @@ export const useStore = create<AppState>()(
 
     }),
     {
-      name: 'internx50-storage-v3', // new key for new schema
+      name: 'internx50-storage-v4', // new key for new schema
     }
   )
 );
