@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { DayPlan, UserStats, TopicMastery, AnalyticsData, ReflectionLog, MockInterview, CustomTask, BacklogItem } from '../lib/types';
+import { DayPlan, UserStats, TopicMastery, AnalyticsData, ReflectionLog, MockInterview, CustomTask, BacklogItem, Task } from '../lib/types';
 import { generateRoadmap, generateInitialTopics } from '../lib/data/seed';
 
 export interface AiSubtopic {
@@ -42,6 +42,7 @@ interface AppState {
   
   // Actions
   completeTask: (dayNumber: number, taskId: string) => void;
+  updateRoadmapTask: (dayNumber: number, taskId: string, updates: Partial<Task>) => void;
   addReflection: (log: ReflectionLog) => void;
   addMockInterview: (mock: MockInterview) => void;
   recalculateReadiness: () => void;
@@ -220,6 +221,21 @@ export const useStore = create<AppState>()(
             readinessHistory: { ...state.analytics.readinessHistory, [state.stats.currentDay]: finalScore }
           }
         };
+      }),
+
+      updateRoadmapTask: (dayNumber, taskId, updates) => set((state) => {
+        const newRoadmap = state.roadmap.map(day => {
+          if (day.dayNumber === dayNumber) {
+            return {
+              ...day,
+              tasks: day.tasks.map(task => 
+                task.id === taskId ? { ...task, ...updates } : task
+              )
+            };
+          }
+          return day;
+        });
+        return { roadmap: newRoadmap };
       }),
 
       completeTask: (dayNumber, taskId) => {
@@ -483,7 +499,7 @@ export const useStore = create<AppState>()(
 
     }),
     {
-      name: 'internx50-storage-v4', // new key for new schema
+      name: 'internx50-storage-v5', // new key for new schema
     }
   )
 );

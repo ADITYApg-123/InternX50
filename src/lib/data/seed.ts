@@ -91,8 +91,8 @@ function generateDailyTasks(day: number, phase: number): Task[] {
   const tasks: Task[] = [
     {
       id: `task-${day}-dsa`,
-      title: `DSA Practice: ${dsaTopic.name}`,
-      description: 'Solve 3-5 standard LeetCode problems. Focus on pattern recognition.',
+      title: `DSA Practice`,
+      description: 'Click the edit icon to add your specific questions or topics for today.',
       category: 'DSA',
       durationMinutes: 180,
       difficulty: 'Medium',
@@ -105,7 +105,7 @@ function generateDailyTasks(day: number, phase: number): Task[] {
     {
       id: `task-${day}-gate`,
       title: 'GATE Revision & Practice',
-      description: 'Cover fundamental topics in OS, DBMS, or CN.',
+      description: 'Click the edit icon to specify the GATE topic you will cover today.',
       category: 'GATE',
       durationMinutes: 120,
       difficulty: 'Medium',
@@ -115,8 +115,8 @@ function generateDailyTasks(day: number, phase: number): Task[] {
     },
     {
       id: `task-${day}-ml`,
-      title: `Core Concept: ${coreTopic.name}`,
-      description: 'Revise theory, mathematical intuition, and implement from scratch.',
+      title: `ML/DL Practice`,
+      description: 'Click the edit icon to add your specific ML/DL topic for today.',
       category: 'ML/DL',
       durationMinutes: 90,
       difficulty: 'Medium',

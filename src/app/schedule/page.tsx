@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { PageTransition } from '@/components/layout/PageTransition';
-import { CalendarDays, ChevronLeft, ChevronRight, Plus, Trash2, CheckCircle2, Circle, Clock } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, Plus, Trash2, CheckCircle2, Circle, Clock, Pencil, X, Check } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -12,9 +12,13 @@ export default function SchedulePage() {
   const [newTaskText, setNewTaskText] = useState('');
   const [newGoalText, setNewGoalText] = useState('');
   
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+  
   const { 
     customTasks, addCustomTask, toggleCustomTask, deleteCustomTask, 
-    roadmap, stats, completeTask,
+    roadmap, stats, completeTask, updateRoadmapTask,
     longTermGoals, addLongTermGoal, toggleLongTermGoal, deleteLongTermGoal
   } = useStore();
 
@@ -179,32 +183,97 @@ export default function SchedulePage() {
                   <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-2">Day {missionDayNumber} Mission Tasks</h3>
                   {roadmapTasks.map((task) => {
                     const isCompleted = task.status === 'Completed';
+                    const isEditing = editingTaskId === task.id;
                     return (
                       <div 
                         key={task.id}
                         className={cn(
-                          "glass p-4 rounded-xl border flex items-start gap-4 transition-all duration-300",
-                          isCompleted ? "border-emerald-500/30 bg-emerald-500/5 opacity-60" : "border-white/5 hover:border-white/20"
+                          "glass p-4 rounded-xl border flex items-start gap-4 transition-all duration-300 group relative",
+                          isCompleted ? "border-emerald-500/30 bg-emerald-500/5 opacity-60" : "border-white/5 hover:border-white/20",
+                          isEditing && "border-indigo-500/50 bg-indigo-500/5"
                         )}
                       >
                         <Checkbox 
                           checked={isCompleted}
                           onCheckedChange={() => completeTask(missionDayNumber!, task.id)}
+                          disabled={isEditing}
                           className={cn("mt-1 w-5 h-5 rounded border-white/20", isCompleted && "data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500")}
                         />
-                        <div className="flex-1 space-y-1">
-                          <div className="flex items-center justify-between">
-                            <p className={cn("font-medium", isCompleted && "line-through text-zinc-500")}>
-                              {task.title}
-                            </p>
-                            <span className={cn("text-xs px-2 py-0.5 rounded-md border", getCategoryColor(task.category))}>
-                              {task.category}
-                            </span>
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-start justify-between gap-4">
+                            {isEditing ? (
+                              <div className="flex-1 space-y-2">
+                                <input 
+                                  type="text" 
+                                  value={editTitle}
+                                  onChange={e => setEditTitle(e.target.value)}
+                                  className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none focus:border-indigo-500"
+                                  placeholder="Task Title"
+                                />
+                                <textarea 
+                                  value={editDesc}
+                                  onChange={e => setEditDesc(e.target.value)}
+                                  className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-sm min-h-[60px] focus:outline-none focus:border-indigo-500 text-zinc-300"
+                                  placeholder="Task Description..."
+                                />
+                                <div className="flex gap-2">
+                                  <button 
+                                    onClick={() => {
+                                      updateRoadmapTask(missionDayNumber!, task.id, { title: editTitle, description: editDesc });
+                                      setEditingTaskId(null);
+                                    }}
+                                    className="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1"
+                                  >
+                                    <Check className="w-3 h-3" /> Save
+                                  </button>
+                                  <button 
+                                    onClick={() => setEditingTaskId(null)}
+                                    className="bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1"
+                                  >
+                                    <X className="w-3 h-3" /> Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex-1 pr-8">
+                                <p className={cn("font-medium", isCompleted && "line-through text-zinc-500")}>
+                                  {task.title}
+                                </p>
+                                {task.description && (
+                                  <p className={cn("text-xs mt-1 whitespace-pre-wrap leading-relaxed", isCompleted ? "text-zinc-600" : "text-zinc-400")}>
+                                    {task.description}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                            
+                            {!isEditing && (
+                              <span className={cn("text-xs px-2 py-0.5 rounded-md border shrink-0", getCategoryColor(task.category))}>
+                                {task.category}
+                              </span>
+                            )}
                           </div>
-                          <div className="flex items-center gap-4 mt-2 text-xs font-medium text-zinc-500">
-                            <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {task.durationMinutes} mins</span>
-                          </div>
+
+                          {!isEditing && (
+                            <div className="flex items-center gap-4 mt-2 text-xs font-medium text-zinc-500">
+                              <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {task.durationMinutes} mins</span>
+                            </div>
+                          )}
                         </div>
+
+                        {!isEditing && (
+                          <button 
+                            onClick={() => {
+                              setEditingTaskId(task.id);
+                              setEditTitle(task.title);
+                              setEditDesc(task.description || '');
+                            }}
+                            className="absolute right-4 top-10 opacity-0 group-hover:opacity-100 p-1.5 bg-white/5 hover:bg-white/10 rounded-md transition-all text-zinc-400"
+                            title="Edit Task"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     );
                   })}
