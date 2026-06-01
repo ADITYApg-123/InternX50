@@ -1,4 +1,4 @@
-export type TaskCategory = 'DSA' | 'GATE' | 'ML/DL' | 'Projects' | 'Communication' | 'OA/Mock' | 'Fundamentals';
+export type TaskCategory = 'DSA' | 'GATE' | 'ML/DL' | 'Projects' | 'Communication' | 'OA/Mock' | 'Fundamentals' | 'Chore';
 export type TaskDifficulty = 'Easy' | 'Medium' | 'Hard';
 export type TaskStatus = 'Pending' | 'Completed' | 'Skipped' | 'Failed';
 
