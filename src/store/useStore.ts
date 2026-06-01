@@ -483,7 +483,7 @@ export const useStore = create<AppState>()(
 
     }),
     {
-      name: 'internx50-storage-v2', // new key for new schema
+      name: 'internx50-storage-v3', // new key for new schema
     }
   )
 );

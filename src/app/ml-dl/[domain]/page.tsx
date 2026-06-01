@@ -2,7 +2,7 @@
 
 import { PageTransition } from '@/components/layout/PageTransition';
 import { useStore } from '@/store/useStore';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { 
@@ -19,7 +19,7 @@ const DOMAIN_TITLES: Record<string, string> = {
   'agentic': 'Agentic AI'
 };
 
-export default function DomainPrepPage({ params }: { params: { domain: string } }) {
+export default function DomainPrepPage({ params }: { params: Promise<{ domain: string }> }) {
   const [mounted, setMounted] = useState(false);
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
   const [newModuleTitle, setNewModuleTitle] = useState('');
@@ -29,7 +29,8 @@ export default function DomainPrepPage({ params }: { params: { domain: string } 
     aiModules, toggleAiSubtopic, addAiModule, addAiSubtopic, deleteAiModule, deleteAiSubtopic 
   } = useStore();
 
-  const domainId = params.domain;
+  const resolvedParams = use(params);
+  const domainId = resolvedParams.domain;
   const domainTitle = DOMAIN_TITLES[domainId] || 'Domain';
   
   // Filter modules for this specific domain
