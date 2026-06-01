@@ -3,6 +3,18 @@ import { persist } from 'zustand/middleware';
 import { DayPlan, UserStats, TopicMastery, AnalyticsData, ReflectionLog, MockInterview, Task, CustomTask, BacklogItem } from '../lib/types';
 import { generateRoadmap, generateInitialTopics } from '../lib/data/seed';
 
+export interface AiSubtopic {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
+export interface AiModule {
+  id: string;
+  title: string;
+  subtopics: AiSubtopic[];
+}
+
 interface AppState {
   roadmap: DayPlan[];
   stats: UserStats;
@@ -36,7 +48,56 @@ interface AppState {
   deleteBacklogItem: (id: string) => void;
 
   setCurrentDay: (dayNumber: number) => void;
+
+  // AI Curriculum
+  aiModules: AiModule[];
+  toggleAiSubtopic: (moduleId: string, subtopicId: string) => void;
+  addAiModule: (title: string) => void;
+  addAiSubtopic: (moduleId: string, title: string) => void;
+  deleteAiModule: (id: string) => void;
+  deleteAiSubtopic: (moduleId: string, subtopicId: string) => void;
 }
+
+const initialAiModules: AiModule[] = [
+  {
+    id: 'mod-ann',
+    title: 'Artificial Neural Networks (ANN)',
+    subtopics: [
+      { id: 'sub-ann-1', title: 'Customer Churn Prediction (ANN Classification)', completed: false },
+      { id: 'sub-ann-2', title: 'Handwritten Digit Classification (MNIST)', completed: false },
+      { id: 'sub-ann-3', title: 'Graduate Admission Prediction (Regression)', completed: false },
+      { id: 'sub-ann-4', title: 'Vanishing & Exploding Gradients Debugging', completed: false },
+      { id: 'sub-ann-5', title: 'Implementing Dropout Layers', completed: false },
+      { id: 'sub-ann-6', title: 'Batch Normalization', completed: false },
+      { id: 'sub-ann-7', title: 'Hyperparameter Tuning with Keras Tuner', completed: false },
+      { id: 'sub-ann-8', title: 'Keras Functional Model API', completed: false }
+    ]
+  },
+  {
+    id: 'mod-cnn',
+    title: 'Convolutional Neural Networks (CNN)',
+    subtopics: [
+      { id: 'sub-cnn-1', title: 'Cat Vs Dog Image Classification Project', completed: false },
+      { id: 'sub-cnn-2', title: 'Implementing Pretrained CNN Models (ImageNet)', completed: false },
+      { id: 'sub-cnn-3', title: 'Transfer Learning & Fine Tuning', completed: false }
+    ]
+  },
+  {
+    id: 'mod-rnn',
+    title: 'Recurrent Neural Networks (RNN & LSTM)',
+    subtopics: [
+      { id: 'sub-rnn-1', title: 'RNN Implementation for Sentiment Analysis', completed: false },
+      { id: 'sub-rnn-2', title: 'Building a Next Word Predictor (LSTM)', completed: false }
+    ]
+  },
+  {
+    id: 'mod-transformers',
+    title: 'Transformers & Attention',
+    subtopics: [
+      { id: 'sub-trans-1', title: 'Programming Self Attention Mechanisms', completed: false }
+    ]
+  }
+];
 
 export const useStore = create<AppState>()(
   persist(
@@ -343,6 +404,37 @@ export const useStore = create<AppState>()(
         }
         return state;
       }),
+
+      aiModules: initialAiModules,
+      
+      toggleAiSubtopic: (moduleId, subtopicId) => set((state) => ({
+        aiModules: state.aiModules.map(mod => mod.id === moduleId ? {
+          ...mod,
+          subtopics: mod.subtopics.map(sub => sub.id === subtopicId ? { ...sub, completed: !sub.completed } : sub)
+        } : mod)
+      })),
+
+      addAiModule: (title) => set((state) => ({
+        aiModules: [...state.aiModules, { id: `mod-${Date.now()}`, title, subtopics: [] }]
+      })),
+
+      addAiSubtopic: (moduleId, title) => set((state) => ({
+        aiModules: state.aiModules.map(mod => mod.id === moduleId ? {
+          ...mod,
+          subtopics: [...mod.subtopics, { id: `sub-${Date.now()}`, title, completed: false }]
+        } : mod)
+      })),
+
+      deleteAiModule: (id) => set((state) => ({
+        aiModules: state.aiModules.filter(mod => mod.id !== id)
+      })),
+
+      deleteAiSubtopic: (moduleId, subtopicId) => set((state) => ({
+        aiModules: state.aiModules.map(mod => mod.id === moduleId ? {
+          ...mod,
+          subtopics: mod.subtopics.filter(sub => sub.id !== subtopicId)
+        } : mod)
+      })),
 
     }),
     {
