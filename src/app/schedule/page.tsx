@@ -2,10 +2,69 @@
 
 import { useState, useMemo } from 'react';
 import { PageTransition } from '@/components/layout/PageTransition';
-import { CalendarDays, ChevronLeft, ChevronRight, Plus, Trash2, CheckCircle2, Circle, Clock, Pencil, X, Check } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, Plus, Trash2, CheckCircle2, Circle, Clock, Pencil, X, Check, GripVertical } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+function SortableGoalItem({ goal, toggleLongTermGoal, deleteLongTermGoal }: any) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id: goal.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 1 : 0,
+    position: 'relative' as any,
+  };
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      className={cn(
+        "group flex items-start gap-3 p-3 rounded-xl transition-all border",
+        goal.completed ? "bg-white/5 border-white/5 opacity-60" : "bg-black/20 border-white/10 hover:border-indigo-500/30",
+        isDragging && "opacity-50 ring-2 ring-indigo-500 ring-offset-2 ring-offset-black z-10 scale-105"
+      )}
+    >
+      <div 
+        {...attributes} 
+        {...listeners} 
+        className="mt-0.5 flex-shrink-0 text-zinc-600 hover:text-zinc-300 transition-colors cursor-grab active:cursor-grabbing outline-none"
+      >
+        <GripVertical className="w-5 h-5" />
+      </div>
+      <button 
+        onClick={() => toggleLongTermGoal(goal.id)}
+        className="mt-0.5 flex-shrink-0 text-zinc-400 hover:text-indigo-400 transition-colors"
+      >
+        {goal.completed ? <CheckCircle2 className="w-5 h-5 text-emerald-500" /> : <Circle className="w-5 h-5" />}
+      </button>
+      <span className={cn(
+        "flex-1 text-sm transition-all",
+        goal.completed && "line-through text-zinc-500"
+      )}>
+        {goal.title}
+      </span>
+      <button 
+        onClick={() => deleteLongTermGoal(goal.id)}
+        className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-red-500/10 text-zinc-500 hover:text-red-400 transition-all shrink-0"
+      >
+        <Trash2 className="w-4 h-4" />
+      </button>
+    </div>
+  );
+}
 
 export default function SchedulePage() {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -19,7 +78,7 @@ export default function SchedulePage() {
   const { 
     customTasks, addCustomTask, toggleCustomTask, deleteCustomTask, 
     roadmap, stats, completeTask, updateRoadmapTask,
-    longTermGoals, addLongTermGoal, toggleLongTermGoal, deleteLongTermGoal
+    longTermGoals, addLongTermGoal, toggleLongTermGoal, deleteLongTermGoal, reorderLongTermGoals
   } = useStore();
 
   const dateString = useMemo(() => {
@@ -85,6 +144,26 @@ export default function SchedulePage() {
       case 'Communication': return 'text-pink-400 bg-pink-400/10 border-pink-400/20';
       case 'OA/Mock': return 'text-red-400 bg-red-400/10 border-red-400/20';
       default: return 'text-zinc-400 bg-zinc-400/10 border-zinc-400/20';
+    }
+  };
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = longTermGoals.findIndex((goal) => goal.id === active.id);
+      const newIndex = longTermGoals.findIndex((goal) => goal.id === over.id);
+      reorderLongTermGoals(oldIndex, newIndex);
     }
   };
 
@@ -338,34 +417,25 @@ export default function SchedulePage() {
               <p className="text-sm text-zinc-400">Keep track of your monthly or yearly milestones.</p>
               
               <div className="space-y-3">
-                {longTermGoals.map(goal => (
-                  <div 
-                    key={goal.id} 
-                    className={cn(
-                      "group flex items-start gap-3 p-3 rounded-xl transition-all border",
-                      goal.completed ? "bg-white/5 border-white/5 opacity-60" : "bg-black/20 border-white/10 hover:border-indigo-500/30"
-                    )}
+                <DndContext 
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext 
+                    items={longTermGoals.map(g => g.id)}
+                    strategy={verticalListSortingStrategy}
                   >
-                    <button 
-                      onClick={() => toggleLongTermGoal(goal.id)}
-                      className="mt-0.5 flex-shrink-0 text-zinc-400 hover:text-indigo-400 transition-colors"
-                    >
-                      {goal.completed ? <CheckCircle2 className="w-5 h-5 text-emerald-500" /> : <Circle className="w-5 h-5" />}
-                    </button>
-                    <span className={cn(
-                      "flex-1 text-sm transition-all",
-                      goal.completed && "line-through text-zinc-500"
-                    )}>
-                      {goal.title}
-                    </span>
-                    <button 
-                      onClick={() => deleteLongTermGoal(goal.id)}
-                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-red-500/10 text-zinc-500 hover:text-red-400 transition-all shrink-0"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
+                    {longTermGoals.map(goal => (
+                      <SortableGoalItem 
+                        key={goal.id} 
+                        goal={goal} 
+                        toggleLongTermGoal={toggleLongTermGoal} 
+                        deleteLongTermGoal={deleteLongTermGoal} 
+                      />
+                    ))}
+                  </SortableContext>
+                </DndContext>
               </div>
 
               <form onSubmit={handleAddGoal} className="flex gap-2">

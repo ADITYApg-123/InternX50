@@ -80,6 +80,7 @@ interface AppState {
   addLongTermGoal: (title: string) => void;
   toggleLongTermGoal: (id: string) => void;
   deleteLongTermGoal: (id: string) => void;
+  reorderLongTermGoals: (startIndex: number, endIndex: number) => void;
 }
 
 const initialAiModules: AiModule[] = [
@@ -496,6 +497,12 @@ export const useStore = create<AppState>()(
       deleteLongTermGoal: (id) => set((state) => ({
         longTermGoals: state.longTermGoals.filter(g => g.id !== id)
       })),
+      reorderLongTermGoals: (startIndex, endIndex) => set((state) => {
+        const result = Array.from(state.longTermGoals);
+        const [removed] = result.splice(startIndex, 1);
+        result.splice(endIndex, 0, removed);
+        return { longTermGoals: result };
+      }),
 
     }),
     {
